@@ -6,8 +6,8 @@ define colorecho
       @tput sgr0
 endef
 
-.PHONY: build
-build: clean
+.PHONY: package
+package: clean
 	$(call colorecho, "\n Building package distributions...")
 	python setup.py install
 	python setup.py bdist_wheel
@@ -31,3 +31,8 @@ clean:
 	find . -name '*.pyo' -exec rm -f {} +
 	find . -name '*~' -exec rm -f  {} +
 	rm -rf build dist pip-wheel-metadata
+
+.PHONY: publish
+publish: package
+	$(call colorecho, "\nPublishing...")
+	twine upload dist/* --verbose
