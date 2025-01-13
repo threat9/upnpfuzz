@@ -2,6 +2,9 @@
 
 UPnPFuzz is a specialized fuzzing tool designed for testing and discovering vulnerabilities within devices and software that implement the Universal Plug and Play (UPnP) protocol.
 
+## Community
+Join community on [Embedded Exploitation Discord](https://discord.gg/UCXARN2vBx).
+
 ## Installation
 
 ### Use of PyPI
