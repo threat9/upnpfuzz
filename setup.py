@@ -13,6 +13,7 @@ setup(
     },
     description="The Universal Plug and Play (UPnP) Fuzzer",
     long_description=README,
+    long_description_content_type="text/markdown",
     author="Threat9",
     author_email="marcin@threat9.com",
     url="https://www.threat9.com",
