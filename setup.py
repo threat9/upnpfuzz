@@ -11,7 +11,7 @@ setup(
         "root": str(HERE),
         "write_to": str(HERE / "upnpfuzz" / "_version.py"),
     },
-    description="UPnP Fuzzer",
+    description="The Universal Plug and Play (UPnP) Fuzzer",
     long_description=README,
     author="Threat9",
     author_email="marcin@threat9.com",
