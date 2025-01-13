@@ -1,0 +1,7 @@
+requests
+isort
+setuptools_scm
+twine
+wheel
+build
+ruff

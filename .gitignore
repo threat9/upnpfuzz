@@ -1,0 +1,6 @@
+.idea
+build
+dist
+__pycache__
+*.egg-info
+upnpfuzz/_version.py
