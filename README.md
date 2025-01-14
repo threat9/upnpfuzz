@@ -13,14 +13,16 @@ Join community on [Embedded Exploitation Discord](https://discord.gg/UCXARN2vBx)
 pip install upnpfuzz
 ```
 
-### Local
+### Local Dev
 ```commandline
 git clone https://github.com/threat9/upnpfuzz
 cd upnpfuzz
 python -m venv venv
 source venv/bin/activate
+pip install -r requirements-dev.txt
 python setup.py install
 ```
+
 ## Usage
 
 ### Discover UPnP devices
