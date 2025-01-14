@@ -148,14 +148,14 @@ class Display:
         second_headline_left += HL * (self.width - get_length_no_colors(second_headline_left))
         left = [
             first_headline_left,
-            VL + f"   {CGRAY}start time :{CCLEAR} {CWHITE}{network_stats.start_time.strftime('%Y-%m-%d %H:%M:%S')}{CCLEAR}".encode("utf-8"),
-            VL + f" {CGRAY}current time :{CCLEAR} {CWHITE}{current_time.strftime('%Y-%m-%d %H:%M:%S')}{CCLEAR}".encode("utf-8"),
-            VL + f"  {CGRAY}running for :{CCLEAR} {CWHITE}{hours}h, {minutes}m, {seconds}s{CCLEAR}".encode("utf-8"),
+            VL + f"   start time : {CWHITE}{network_stats.start_time.strftime('%Y-%m-%d %H:%M:%S')}{CCLEAR}".encode("utf-8"),
+            VL + f" current time : {CWHITE}{current_time.strftime('%Y-%m-%d %H:%M:%S')}{CCLEAR}".encode("utf-8"),
+            VL + f"  running for : {CWHITE}{hours}h, {minutes}m, {seconds}s{CCLEAR}".encode("utf-8"),
 
             second_headline_left,
-            VL + f" {CGRAY}strategy :{CCLEAR} {CWHITE}{current_strategy.value}{CCLEAR}".encode("utf-8"),
-            VL + f"    {CGRAY}speed :{CCLEAR} {CWHITE}{speed}/s{CCLEAR}".encode("utf-8"),
-            VL + f"  {CGRAY}crashes :{CCLEAR} {CWHITE}{crashes}{CCLEAR}".encode("utf-8"),
+            VL + f" strategy : {CWHITE}{current_strategy.value}{CCLEAR}".encode("utf-8"),
+            VL + f"    speed : {CWHITE}{speed}/s{CCLEAR}".encode("utf-8"),
+            VL + f"  crashes : {CWHITE}{crashes}{CCLEAR}".encode("utf-8"),
 
             BLC + HL * (self.width - 1)
         ]
@@ -166,14 +166,14 @@ class Display:
         second_headline_right += HL * (self.width - get_length_no_colors(second_headline_right)) + VXR
         right = [
             first_headline_right,
-            VL + f" {CGRAY}protocol :{CCLEAR} {CWHITE}{generator}{CCLEAR}".encode("utf-8"),
-            VL + f" {CGRAY}strategy :{CCLEAR} {CWHITE}{selected_strategy.value}{CCLEAR}".encode("utf-8"),
+            VL + f" protocol : {CWHITE}{generator}{CCLEAR}".encode("utf-8"),
+            VL + f" strategy : {CWHITE}{selected_strategy.value}{CCLEAR}".encode("utf-8"),
             VL,
 
             second_headline_right,
-            VL + f" {CGRAY}requests :{CCLEAR} {CWHITE}{network_stats.total_requests}{CCLEAR}".encode("utf-8"),
-            VL + f" {CGRAY}timeouts :{CCLEAR} {CWHITE}{network_stats.timeouts}{CCLEAR}".encode("utf-8"),
-            VL + f"   {CGRAY}errors :{CCLEAR} {CWHITE}{network_stats.errors}{CCLEAR}".encode("utf-8"),
+            VL + f" requests : {CWHITE}{network_stats.total_requests}{CCLEAR}".encode("utf-8"),
+            VL + f" timeouts : {CWHITE}{network_stats.timeouts}{CCLEAR}".encode("utf-8"),
+            VL + f"   errors : {CWHITE}{network_stats.errors}{CCLEAR}".encode("utf-8"),
 
             VXU + HL * (self.width - 1) + RBC
         ]
@@ -202,9 +202,9 @@ class Display:
 
         print_line(headline.decode("cp437"))
         try:
-            print_line(CGRAY + request.decode("utf-8")[:MAX_REQUEST_RESPONSE_SIZE] + CCLEAR)
+            print_line(request.decode("utf-8")[:MAX_REQUEST_RESPONSE_SIZE])
         except Exception:
-            print_line(CGRAY + str(request[:MAX_REQUEST_RESPONSE_SIZE]) + CCLEAR)
+            print_line(str(request[:MAX_REQUEST_RESPONSE_SIZE]))
 
     def print_response(self, response: bytes):
         """
@@ -219,6 +219,6 @@ class Display:
 
         print_line(headline.decode("cp437"))
         try:
-            print_line(CGRAY + response.decode("utf-8")[:MAX_REQUEST_RESPONSE_SIZE] + CCLEAR)
+            print_line(response.decode("utf-8")[:MAX_REQUEST_RESPONSE_SIZE])
         except Exception:
-            print_line(CGRAY + str(response[:MAX_REQUEST_RESPONSE_SIZE]) + CCLEAR)
+            print_line(str(response[:MAX_REQUEST_RESPONSE_SIZE]))
