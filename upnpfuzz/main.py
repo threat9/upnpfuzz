@@ -31,6 +31,8 @@ def main():
     parser.add_argument("--radamsa-path", type=str, default="")
     parser.add_argument("--network-timeout", type=float, default=5)
 
+    parser.add_argument("--esp-callback", type=str, default="")
+
     args = parser.parse_args()
 
     if args.discover:
@@ -68,7 +70,7 @@ def main():
             soap.fuzz(strategy)
 
     elif args.esp:
-        esp = ESP(args.esp, args.delay, args.alive_url, args.crash_dir, args.restart_cmd, args.restart_delay, args.radamsa_path, args.network_timeout)
+        esp = ESP(args.esp, args.delay, args.alive_url, args.crash_dir, args.restart_cmd, args.restart_delay, args.radamsa_path, args.network_timeout, args.esp_callback)
         if not esp.generator.generate_grammar():
             print_error("failed to retrieve events and build grammar")
             return
