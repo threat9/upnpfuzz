@@ -1,13 +1,21 @@
 import argparse
+import signal
 
-from upnpfuzz.display import print_error
+from upnpfuzz.display import print_error, print_line
 from upnpfuzz.protocols.base import Strategy
 from upnpfuzz.protocols.esp import ESP
 from upnpfuzz.protocols.soap import SOAP
 from upnpfuzz.protocols.ssdp import SSDP
 
 
+def signal_handler(sig, frame):
+    print_line("exiting...")
+    exit(0)
+
+
 def main():
+    signal.signal(signal.SIGINT, signal_handler)
+
     parser = argparse.ArgumentParser(prog="upnpfuzz")
     parser.add_argument("--discover", action="store_true")
 
