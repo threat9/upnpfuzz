@@ -15,6 +15,7 @@ class ESP(BaseProtocol):
             restart_delay: str = 10,
             radamsa_path: str = "",
             network_timeout = 5,
+            esp_callback = "",
     ):
         """
         Initializes the ESP instance.
@@ -32,7 +33,7 @@ class ESP(BaseProtocol):
         base_url, host, port = parse_url(target)
 
         network = Network(host, port, NetworkProtocol.TCP, network_timeout)
-        generator = ESPGenerator(target)
+        generator = ESPGenerator(target, esp_callback)
         super().__init__(network, generator, delay, alive_url, crash_dir, restart_cmd, restart_delay, radamsa_path)
 
     def fuzz_radamsa(self) -> FuzzResponse:

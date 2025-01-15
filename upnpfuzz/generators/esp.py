@@ -177,7 +177,7 @@ class ESPGenerator(BaseGenerator):
     """
     name = "esp"
 
-    def __init__(self, url: str):
+    def __init__(self, url: str, callback: str):
         """
         Initializes the ESPGenerator.
 
@@ -187,7 +187,7 @@ class ESPGenerator(BaseGenerator):
         self.events = []
         self.sids = {}
         self.event = ""
-        self.callback = "http://192.168.2.159:8000/callback"
+        self.callback = callback if callback else "http://192.168.2.159:8000/callback"
         self.url = url
         _, self.host, self.port = parse_url(url)
 
