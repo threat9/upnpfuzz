@@ -21,8 +21,9 @@ class Radamsa:
         if radamsa_path:
             self.binary = radamsa_path
 
-        if shutil.which(radamsa_path) is None:
+        if shutil.which(self.binary) is None:
             print_error("radamsa is not installed")
+            self.binary = ""
 
     def fuzz(self, request: bytes) -> bytes:
         """
@@ -34,6 +35,9 @@ class Radamsa:
         Returns:
             bytes: Fuzzed request with Radamsa.
         """
+        if not self.binary:
+            return request
+
         out, err = run_command(
             cmd=self.binary,
             inp=request
