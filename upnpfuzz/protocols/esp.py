@@ -1,3 +1,6 @@
+import time
+from typing import Callable
+
 from upnpfuzz.generators.esp import ESPGenerator
 from upnpfuzz.network import Network, NetworkProtocol
 from upnpfuzz.protocols.base import BaseProtocol, FuzzResponse, Strategy
@@ -35,6 +38,35 @@ class ESP(BaseProtocol):
         network = Network(host, port, NetworkProtocol.TCP, network_timeout)
         generator = ESPGenerator(target, esp_callback)
         super().__init__(network, generator, delay, alive_url, crash_dir, restart_cmd, restart_delay, radamsa_path)
+
+    def run(self, fuzzer: Callable[[], FuzzResponse], selected_strategy: Strategy) -> None:
+        """
+        Runs the fuzzing loop.
+
+        Args:
+            fuzzer (Callable[[], FuzzResponse]): The fuzzer function that should be executed: radamsa/injection/overflow.
+            selected_strategy (Strategy): The strategy that was selected.
+        """
+        while True:
+            current_strategy, request = fuzzer()
+
+            self.display.print_stats(
+                self.network.stats,
+                self.monitor.crashes,
+                self.generator.name,
+                selected_strategy,
+                current_strategy
+            )
+            self.display.print_request(request)
+
+            response = self.network.send(request)
+            self.display.print_response(response)
+            self.generator.handle_sid(response)
+
+            if not self.monitor.check_alive():
+                self.monitor.handle_crash(self.generator.name, current_strategy, request)
+
+            time.sleep(self.delay)
 
     def fuzz_radamsa(self) -> FuzzResponse:
         """
