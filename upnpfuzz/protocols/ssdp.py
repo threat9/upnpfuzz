@@ -37,7 +37,8 @@ class SSDP(BaseProtocol):
             restart_cmd: str = "",
             restart_delay: float = 10,
             radamsa_path: str = "",
-            network_timeout: float = 5
+            network_timeout: float = 5,
+            interface_ip: str = ""
     ):
         """
         Initializes the SSDP instance.
@@ -55,7 +56,7 @@ class SSDP(BaseProtocol):
         host, port = target.split(":")
         port = int(port)
 
-        network = Network(host, port, NetworkProtocol.UDP, network_timeout)
+        network = Network(host, port, NetworkProtocol.UDP, network_timeout, interface_ip)
         generator = SSDPGenerator(host, port)
         super().__init__(network, generator, delay, alive_url, crash_dir, restart_cmd, restart_delay, radamsa_path)
 
