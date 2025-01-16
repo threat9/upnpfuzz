@@ -1,3 +1,4 @@
+import base64
 import enum
 import random
 from typing import Dict, List, Tuple
@@ -195,19 +196,32 @@ class SOAPRequest:
         Returns:
             List[bytes]: The list of argument params.
         """
-        value = ""
         if argument.allowed_values:
             value = random.choice(argument.allowed_values).encode("utf-8")
         elif argument.default_value:
             value = argument.default_value.encode("utf-8")
+        elif argument.data_type == "u1":
+            value = b"1"
         elif argument.data_type == "ui2":
             value = b"1"
         elif argument.data_type == "ui4":
+            value = b"1"
+        elif argument.data_type == "i1":
+            value = b"1"
+        elif argument.data_type == "i2":
+            value = b"1"
+        elif argument.data_type == "i4":
             value = b"1"
         elif argument.data_type == "string":
             value = b"192.168.1.4"
         elif argument.data_type == "boolean":
             value = random.choice([b"0", b"1"])
+        elif argument.data_type == "bin.base64":
+            value = base64.b64encode(
+                b"A" * random.randint(0, 256)
+            )
+        else:
+            value = b"A" * random.randint(0, 0xff)
 
         return [
             b"<", argument.name.encode("utf-8"), b">",
@@ -259,6 +273,9 @@ class SOAPGenerator(BaseGenerator):
                     if not scpd_url.startswith("/"):
                         scpd_url = "/" + scpd_url
                     scpd_url = self.base_url + scpd_url
+
+                if not control_url.startswith("/"):
+                    control_url = "/" + control_url
 
                 print_status(f"requesting: {scpd_url}")
                 response = requests.get(scpd_url, timeout=TIMEOUT)
