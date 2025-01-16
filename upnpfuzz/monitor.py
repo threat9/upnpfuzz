@@ -1,10 +1,13 @@
 import datetime
+import os
 import time
 
 import requests
 
-from upnpfuzz.display import print_status, print_success
+from upnpfuzz.display import print_error, print_status, print_success
 from upnpfuzz.utils import run_command
+
+TIMEOUT = 10
 
 
 class Monitor:
@@ -38,39 +41,55 @@ class Monitor:
             return True
 
         try:
-            requests.get(self.alive_url)
+            requests.get(self.alive_url, timeout=TIMEOUT)
             return True
         except requests.exceptions.RequestException:
-            print_status(f"The target at alive url ({self.alive_url}) does not respond")
+            print_status(f"The target at alive url {self.alive_url} does not respond...")
 
         return False
 
-    def save_crash(self, request: bytes) -> None:
+    def create_crash_dir(self) -> None:
+        """
+        Creates crash dir.
+        """
+        if not os.path.exists(self.crash_dir):
+            print_status(f"Creating crash dir {self.crash_dir}")
+            os.makedirs(self.crash_dir)
+
+    def save_crash(self, generator_name: str, strategy, request: bytes) -> None:
         """
         Saves the request in the crash file.
 
         Args:
+            generator_name (str): The name of the generator.
+            strategy (Strategy): Used strategy.
             request (bytes): The request that should be saved.
         """
         self.crashes += 1
-        current_time = datetime.datetime.now()
-        filename = f"crash_{self.crashes}_{current_time}"
+        current_time = datetime.datetime.now().strftime("%H_%M_%S_%d_%m_%Y")
+        filename = f"{generator_name}_{strategy.value}_{self.crashes}_at_{current_time}"
         path = f"{self.crash_dir}/{filename}"
         print_success(f"Saving crash to {path}")
         with open(path, "wb+") as f:
             f.write(request)
 
-    def handle_crash(self, request: bytes) -> None:
+    def handle_crash(self, generator_name: str, strategy, request: bytes) -> None:
         """
         Handles crash by saving it and restarting target.
 
         Args:
+            generator_name (str): The name of the generator.
+            strategy (Strategy): Used strategy.
             request (bytes): The request that should be saved.
         """
-        self.save_crash(request)
+        self.save_crash(generator_name, strategy, request)
 
         if self.restart_cmd:
+            print_status("Executing restart command...")
             run_command(self.restart_cmd)
+        else:
+            print_error("No restart command defined, waiting for automatic restart...")
 
         while not self.check_alive():
+            print_status(f"Waiting {self.restart_delay} seconds for the target to restart...")
             time.sleep(self.restart_delay)
