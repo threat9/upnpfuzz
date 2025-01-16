@@ -74,6 +74,8 @@ class BaseProtocol:
         """
         The entry point for sending raw requests.
         """
+        self.monitor.create_crash_dir()
+
         fuzzer = self.fuzz_raw
         self.run(fuzzer, Strategy.RAW)
 
@@ -81,6 +83,8 @@ class BaseProtocol:
         """
         The entrypoint for fuzzing.
         """
+        self.monitor.create_crash_dir()
+
         fuzzer = self.fuzz_all
 
         if strategy == Strategy.RADAMSA:
@@ -131,7 +135,7 @@ class BaseProtocol:
             self.display.print_response(response)
 
             if not self.monitor.check_alive():
-                self.monitor.handle_crash(request)
+                self.monitor.handle_crash(self.generator.name, current_strategy, request)
 
             time.sleep(self.delay)
 

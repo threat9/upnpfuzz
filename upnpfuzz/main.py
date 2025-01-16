@@ -34,17 +34,18 @@ def main():
     parser.add_argument("--alive-url", type=str, default="")
     parser.add_argument("--crash-dir", type=str, default="/tmp/fuzz_upnpfuzz")
     parser.add_argument("--restart-cmd", type=str, default="")
-    parser.add_argument("--restart-delay", type=int, default=10)
+    parser.add_argument("--restart-delay", type=int, default=30)
 
     parser.add_argument("--radamsa-path", type=str, default="")
     parser.add_argument("--network-timeout", type=float, default=5)
+    parser.add_argument("--interface-ip", type=str)
 
-    parser.add_argument("--esp-callback", type=str, default="")
+    parser.add_argument("--esp-callback", type=str, default="http://192.168.2.159:8000/callback")
 
     args = parser.parse_args()
 
     if args.discover:
-        ssdp = SSDP("239.255.255.250:1900", network_timeout=args.network_timeout)
+        ssdp = SSDP("239.255.255.250:1900", network_timeout=args.network_timeout, interface_ip=args.interface_ip)
         ssdp.discover()
 
     strategy = None
@@ -58,7 +59,7 @@ def main():
         strategy = Strategy.RADAMSA
 
     if args.ssdp:
-        ssdp = SSDP(args.ssdp, args.delay, args.alive_url, args.crash_dir, args.restart_cmd, args.restart_delay, args.radamsa_path, args.network_timeout)
+        ssdp = SSDP(args.ssdp, args.delay, args.alive_url, args.crash_dir, args.restart_cmd, args.restart_delay, args.radamsa_path, args.network_timeout, interface_ip=args.interface_ip)
         if args.raw:
             ssdp.raw()
         elif strategy:

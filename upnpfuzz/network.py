@@ -29,7 +29,7 @@ class Network:
     """
     Handles network TCP/UDP communication with the target.
     """
-    def __init__(self, host: str, port: int, network_protocol: NetworkProtocol, network_timeout: float):
+    def __init__(self, host: str, port: int, network_protocol: NetworkProtocol, network_timeout: float, interface_ip: str = ""):
         """
         Initializes the network instance.
 
@@ -44,6 +44,7 @@ class Network:
 
         self.stats = NetworkStats()
         self.network_timeout = network_timeout
+        self.interface_ip = interface_ip
 
         socket.setdefaulttimeout(network_timeout)
 
@@ -128,6 +129,10 @@ class Network:
             data (bytes): The data to send.
         """
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+        if self.interface_ip:
+            sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_IF, socket.inet_aton(self.interface_ip))
+        sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 2)
 
         sock.sendto(data, (self.host, self.port))
 

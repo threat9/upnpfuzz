@@ -57,7 +57,7 @@ class NewSubscribe:
         """
         event, host, port, callback, nt, timeout = headers_params
         request = (
-            b"SUBSCRIBE " + event + b"HTTP/1.1\r\n" +
+            b"SUBSCRIBE " + event + b" HTTP/1.1\r\n" +
             b"HOST: " + host + b":" + port + b"\r\n" +
             b"CALLBACK: " + b"<" + callback + b">\r\n" +
             b"NT: " + nt + b"\r\n" +
@@ -71,7 +71,7 @@ class RenewalSubscribe:
     """
     Represents renewal subscribe request.
     """
-    def __init__(self, event: str, host: str, port: int, sid: str):
+    def __init__(self, event: str, host: str, port: int, sid: bytes):
         """
         Initializes the renewal subscribe request.
 
@@ -79,12 +79,12 @@ class RenewalSubscribe:
             event (str): The event path.
             host (str): The target host address.
             port (int): The target port number.
-            sid (str): The sid identifier.
+            sid (bytes): The sid identifier.
         """
         self.event = event.encode("utf-8")
         self.host = host.encode("utf-8")
         self.port = str(port).encode("utf-8")
-        self.sid = sid.encode("utf-8")
+        self.sid = sid
 
     def get_headers_params(self) -> List[bytes]:
         """
@@ -124,7 +124,7 @@ class Unsubscribe:
     """
     Represents unsubscribe request.
     """
-    def __init__(self, event: str, host: str, port: int, sid: str):
+    def __init__(self, event: str, host: str, port: int, sid: bytes):
         """
         Initializes the unsubscribe request.
 
@@ -132,12 +132,12 @@ class Unsubscribe:
             event (str): The event path.
             host (str): The target host address.
             port (int): The target port number.
-            sid (str): The sid identifier.
+            sid (bytes): The sid identifier.
         """
         self.event = event.encode("utf-8")
         self.host = host.encode("utf-8")
         self.port = str(port).encode("utf-8")
-        self.sid = sid.encode("utf-8")
+        self.sid = sid
 
     def get_headers_params(self) -> List[bytes]:
         """
@@ -187,7 +187,7 @@ class ESPGenerator(BaseGenerator):
         self.events = []
         self.sids = {}
         self.event = ""
-        self.callback = callback if callback else "http://192.168.2.159:8000/callback"
+        self.callback = callback
         self.url = url
         _, self.host, self.port = parse_url(url)
 
@@ -210,6 +210,10 @@ class ESPGenerator(BaseGenerator):
         for device in xml.getElementsByTagName("device"):
             for service in device.getElementsByTagName("service"):
                 event_sub_url = service.getElementsByTagName("eventSubURL")[0].firstChild.data
+
+                if not event_sub_url.startswith("/"):
+                    event_sub_url = "/" + event_sub_url
+
                 self.events.append(event_sub_url)
 
         return True if self.events else False
@@ -223,7 +227,7 @@ class ESPGenerator(BaseGenerator):
         """
         res = re.search(b"SID: (.*?)\r\n", response)
         if res:
-            sid = res.group(1).decode("utf-8")
+            sid = res.group(1)
             self.sids[sid] = self.event
 
     def get_request(self) -> Union[NewSubscribe, RenewalSubscribe, Unsubscribe]:
@@ -261,7 +265,7 @@ class ESPGenerator(BaseGenerator):
         if sid:
             event = self.sids[sid]
         else:
-            sid = "uuid:1234-5678-90ab-cdef"
+            sid = b"uuid:1234-5678-90ab-cdef"
             event = random.choice(self.events)
 
         return RenewalSubscribe(event, self.host, self.port, sid)
@@ -279,7 +283,7 @@ class ESPGenerator(BaseGenerator):
             event = self.sids[sid]
             del self.sids[sid]
         else:
-            sid = "uuid:1234-5678-90ab-cdef"
+            sid = b"uuid:1234-5678-90ab-cdef"
             event = random.choice(self.events)
 
         return Unsubscribe(event, self.host, self.port, sid)
