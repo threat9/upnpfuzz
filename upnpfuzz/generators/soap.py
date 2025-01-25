@@ -1,6 +1,9 @@
 import base64
 import enum
 import random
+import uuid
+import binascii
+import datetime
 from typing import Dict, List, Tuple
 from xml.dom.minidom import parseString
 
@@ -17,8 +20,9 @@ class ActionType(enum.Enum):
     """
     Represents actions type.
     """
-    IN = 0
-    OUT = 1
+    ALL = 0
+    IN = 1
+    OUT = 2
 
 
 class Argument:
@@ -200,26 +204,101 @@ class SOAPRequest:
             value = random.choice(argument.allowed_values).encode("utf-8")
         elif argument.default_value:
             value = argument.default_value.encode("utf-8")
-        elif argument.data_type == "u1":
-            value = b"1"
+        elif argument.data_type == "ui1":
+            value = str(random.randint(0, 0xff)).encode("utf-8")
         elif argument.data_type == "ui2":
-            value = b"1"
+            value = str(random.randint(0, 0xffff)).encode("utf-8")
         elif argument.data_type == "ui4":
-            value = b"1"
+            value = str(random.randint(0, 0xffffffff)).encode("utf-8")
         elif argument.data_type == "i1":
-            value = b"1"
+            value = str(random.randint(-0x80, 0x7f)).encode("utf-8")
         elif argument.data_type == "i2":
-            value = b"1"
+            value = str(random.randint(-0x8000, 0x7fff)).encode("utf-8")
         elif argument.data_type == "i4":
-            value = b"1"
+            value = str(random.randint(-0x80000000, 0x7fffffff)).encode("utf-8")
+        elif argument.data_type == "boolean":
+            value = random.choice([b"0", b"1", b"true", b"false", b"yes", b"no"])
         elif argument.data_type == "string":
             value = b"192.168.1.4"
-        elif argument.data_type == "boolean":
-            value = random.choice([b"0", b"1"])
+        elif argument.data_type == "number":
+            value = str(random.uniform(-1.8e30, 1.8e30)).encode("utf-8")
+        elif argument.data_type == "fixed.14.14":
+            value = str(random.uniform(-1.8e30, 1.8e30)).encode("utf-8")
+        elif argument.data_type == "float":
+            value = str(random.uniform(-1.8e30, 1.8e30)).encode("utf-8")
+        elif argument.data_type == "char":
+            value = b"A"
+        elif argument.data_type == "date":
+            random_date = generate_random_date()
+
+            value = random_date.strftime("%Y-%m-%d").encode("utf-8")
+        elif argument.data_type == "dateTime":
+            random_date = generate_random_date()
+
+            if random.choice([True, False]):
+                hours = random.randint(0, 23)
+                minutes = random.randint(0, 59)
+                seconds = random.randint(0, 59)
+
+                value = (random_date.strftime('%Y-%m-%d') + f"T{hours:02}:{minutes:02}:{seconds:02}").encode("utf-8")
+            else:
+                value = random_date.strftime('%Y-%m-%d').encode("utf-8")
+        elif argument.data_type == "dateTime.tz":
+            random_date = generate_random_date()
+
+            if random.choice([True, False]):
+                hours = random.randint(0, 23)
+                minutes = random.randint(0, 59)
+                seconds = random.randint(0, 59)
+
+                time_part = f"T{hours:02}:{minutes:02}:{seconds:02}"
+            else:
+                time_part = ""
+
+            if random.choice([True, False]):
+                tz_hours = random.randint(-12, 14)
+                tz_minutes = random.choice([0, 15, 30, 45])  # Random minutes part of the timezone
+                if tz_hours < 0:
+                    tz_str = f"-{-tz_hours:02}:{tz_minutes:02}"
+                else:
+                    tz_str = f"+{tz_hours:02}:{tz_minutes:02}"
+                tz_part = tz_str
+            else:
+                tz_part = ""
+
+            value = (random_date.strftime('%Y-%m-%d') + time_part + tz_part).encode("utf-8")
+        elif argument.data_type == "time":
+            start_time = datetime.datetime(2000, 1, 1)
+            end_time = datetime.datetime(2030, 1, 1)
+            random_seconds = random.randint(0, int((end_time - start_time).total_seconds()))
+            random_time = start_time + datetime.timedelta(seconds=random_seconds)
+            value = random_time.isoformat().encode("utf-8")
+        elif argument.data_type == "time.tz":
+            offset_hours = random.randint(-12, 14)
+            offset_minutes = random.choice([0, 15, 30, 45])
+            if offset_hours < 0:
+                offset_str = f"-{-offset_hours:02}:{offset_minutes:02}"
+            else:
+                offset_str = f"+{offset_hours:02}:{offset_minutes:02}"
+
+            start_time = datetime.datetime(2000, 1, 1)
+            end_time = datetime.datetime(2030, 1, 1)
+            random_seconds = random.randint(0, int((end_time - start_time).total_seconds()))
+
+            random_time = start_time + datetime.timedelta(seconds=random_seconds)
+            value = (random_time.isoformat() + offset_str).encode("utf-8")
         elif argument.data_type == "bin.base64":
             value = base64.b64encode(
-                b"A" * random.randint(0, 256)
+                b"A" * random.randint(0, 0xff)
             )
+        elif argument.data_type == "bin.hex":
+            value = binascii.hexlify(
+                b"A" * random.randint(0, 0xff)
+            )
+        elif argument.data_type == "uri":
+            value = b"http://127.0.0.1/path"
+        elif argument.data_type == "uuid":
+            value = str(uuid.uuid4()).encode("utf-8")
         else:
             value = b"A" * random.randint(0, 0xff)
 
@@ -247,9 +326,12 @@ class SOAPGenerator(BaseGenerator):
         self.url = url
         self.base_url, self.host, self.port = parse_url(url)
 
-    def generate_grammar(self) -> bool:
+    def generate_grammar(self, soap_type: ActionType) -> bool:
         """
         Generates grammar for SOAP.
+
+        Args:
+            soap_type (ActionType): The soap type that should be targeted.
 
         Returns:
             bool: Returns true if generating grammar was successful or false it failed.
@@ -263,29 +345,28 @@ class SOAPGenerator(BaseGenerator):
 
         xml = parseString(response.content)
 
-        for device in xml.getElementsByTagName("device"):
-            for service in device.getElementsByTagName("service"):
-                scpd_url = service.getElementsByTagName("SCPDURL")[0].firstChild.data
-                control_url = service.getElementsByTagName("controlURL")[0].firstChild.data
-                service_type = service.getElementsByTagName("serviceId")[0].firstChild.data
+        for service in xml.getElementsByTagName("service"):
+            scpd_url = service.getElementsByTagName("SCPDURL")[0].firstChild.data
+            control_url = service.getElementsByTagName("controlURL")[0].firstChild.data
+            service_type = service.getElementsByTagName("serviceId")[0].firstChild.data
 
-                if "://" not in scpd_url:
-                    if not scpd_url.startswith("/"):
-                        scpd_url = "/" + scpd_url
-                    scpd_url = self.base_url + scpd_url
+            if "://" not in scpd_url:
+                if not scpd_url.startswith("/"):
+                    scpd_url = "/" + scpd_url
+                scpd_url = self.base_url + scpd_url
 
-                if not control_url.startswith("/"):
-                    control_url = "/" + control_url
+            if not control_url.startswith("/"):
+                control_url = "/" + control_url
 
-                print_status(f"requesting: {scpd_url}")
-                response = requests.get(scpd_url, timeout=TIMEOUT)
-                xml = parseString(response.content)
+            print_status(f"requesting: {scpd_url}")
+            response = requests.get(scpd_url, timeout=TIMEOUT)
+            xml = parseString(response.content)
 
-                self._process_service(xml, control_url, service_type)
+            self._process_service(xml, control_url, service_type, soap_type)
 
         return True if self.actions else False
 
-    def _process_service(self, xml, control_url: str, service_type: str) -> None:
+    def _process_service(self, xml, control_url: str, service_type: str, soap_type: ActionType) -> None:
         """
         Process the specified service.
 
@@ -313,9 +394,10 @@ class SOAPGenerator(BaseGenerator):
                 if argument.getElementsByTagName("direction")[0].firstChild.data == "in":
                     action_type = ActionType.IN
 
-            self.actions.append(
-                Action(control_url, service_type, action_name, action_type, arguments)
-            )
+            if soap_type == ActionType.ALL or action_type == soap_type:
+                self.actions.append(
+                    Action(control_url, service_type, action_name, action_type, arguments)
+                )
 
     @staticmethod
     def _get_state_variables(xml) -> Dict[str, Tuple[str, str, List[str]]]:
@@ -363,3 +445,13 @@ class SOAPGenerator(BaseGenerator):
         print(f"SOAP: {self.host}:{self.port} ")
         for action in self.actions:
             action.print()
+
+
+def generate_random_date() -> datetime:
+    start_date = datetime.datetime(2000, 1, 1)
+    end_date = datetime.datetime(2030, 1, 1)
+
+    delta_days = random.randint(0, (end_date - start_date).days)
+    random_date = start_date + datetime.timedelta(days=delta_days)
+
+    return random_date

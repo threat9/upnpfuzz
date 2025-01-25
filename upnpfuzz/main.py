@@ -6,6 +6,7 @@ from upnpfuzz.protocols.base import Strategy
 from upnpfuzz.protocols.esp import ESP
 from upnpfuzz.protocols.soap import SOAP
 from upnpfuzz.protocols.ssdp import SSDP
+from upnpfuzz.generators.soap import ActionType
 
 
 def signal_handler(sig, frame):
@@ -41,6 +42,7 @@ def main():
     parser.add_argument("--interface-ip", type=str)
 
     parser.add_argument("--esp-callback", type=str, default="http://192.168.2.159:8000/callback")
+    parser.add_argument("--soap-type", type=str, choices=["all", "in", "out"], default="all")
 
     args = parser.parse_args()
 
@@ -67,7 +69,7 @@ def main():
 
     elif args.soap:
         soap = SOAP(args.soap, args.delay, args.alive_url, args.crash_dir, args.restart_cmd, args.restart_delay, args.radamsa_path, args.network_timeout)
-        if not soap.generator.generate_grammar():
+        if not soap.generator.generate_grammar(ActionType[args.soap_type.upper()]):
             print_error("failed to retrieve actions and build grammar")
             return
 
