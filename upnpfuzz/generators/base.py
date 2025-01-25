@@ -13,8 +13,5 @@ class BaseGenerator:
     def get_request(self) -> List[bytes]:
         return []
 
-    def generate_grammar(self) -> bool:
-        return True
-
     def list(self) -> None:
         return

@@ -20,8 +20,9 @@ class ActionType(enum.Enum):
     """
     Represents actions type.
     """
-    IN = 0
-    OUT = 1
+    ALL = 0
+    IN = 1
+    OUT = 2
 
 
 class Argument:
@@ -325,9 +326,12 @@ class SOAPGenerator(BaseGenerator):
         self.url = url
         self.base_url, self.host, self.port = parse_url(url)
 
-    def generate_grammar(self) -> bool:
+    def generate_grammar(self, soap_type: ActionType) -> bool:
         """
         Generates grammar for SOAP.
+
+        Args:
+            soap_type (ActionType): The soap type that should be targeted.
 
         Returns:
             bool: Returns true if generating grammar was successful or false it failed.
@@ -341,29 +345,28 @@ class SOAPGenerator(BaseGenerator):
 
         xml = parseString(response.content)
 
-        for device in xml.getElementsByTagName("device"):
-            for service in device.getElementsByTagName("service"):
-                scpd_url = service.getElementsByTagName("SCPDURL")[0].firstChild.data
-                control_url = service.getElementsByTagName("controlURL")[0].firstChild.data
-                service_type = service.getElementsByTagName("serviceId")[0].firstChild.data
+        for service in xml.getElementsByTagName("service"):
+            scpd_url = service.getElementsByTagName("SCPDURL")[0].firstChild.data
+            control_url = service.getElementsByTagName("controlURL")[0].firstChild.data
+            service_type = service.getElementsByTagName("serviceId")[0].firstChild.data
 
-                if "://" not in scpd_url:
-                    if not scpd_url.startswith("/"):
-                        scpd_url = "/" + scpd_url
-                    scpd_url = self.base_url + scpd_url
+            if "://" not in scpd_url:
+                if not scpd_url.startswith("/"):
+                    scpd_url = "/" + scpd_url
+                scpd_url = self.base_url + scpd_url
 
-                if not control_url.startswith("/"):
-                    control_url = "/" + control_url
+            if not control_url.startswith("/"):
+                control_url = "/" + control_url
 
-                print_status(f"requesting: {scpd_url}")
-                response = requests.get(scpd_url, timeout=TIMEOUT)
-                xml = parseString(response.content)
+            print_status(f"requesting: {scpd_url}")
+            response = requests.get(scpd_url, timeout=TIMEOUT)
+            xml = parseString(response.content)
 
-                self._process_service(xml, control_url, service_type)
+            self._process_service(xml, control_url, service_type, soap_type)
 
         return True if self.actions else False
 
-    def _process_service(self, xml, control_url: str, service_type: str) -> None:
+    def _process_service(self, xml, control_url: str, service_type: str, soap_type: ActionType) -> None:
         """
         Process the specified service.
 
@@ -391,9 +394,10 @@ class SOAPGenerator(BaseGenerator):
                 if argument.getElementsByTagName("direction")[0].firstChild.data == "in":
                     action_type = ActionType.IN
 
-            self.actions.append(
-                Action(control_url, service_type, action_name, action_type, arguments)
-            )
+            if soap_type == ActionType.ALL or action_type == soap_type:
+                self.actions.append(
+                    Action(control_url, service_type, action_name, action_type, arguments)
+                )
 
     @staticmethod
     def _get_state_variables(xml) -> Dict[str, Tuple[str, str, List[str]]]:
